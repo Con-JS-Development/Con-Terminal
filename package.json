@@ -1,0 +1,22 @@
+{
+  "name": "con-terminal",
+  "version": "0.1.0",
+  "description": "Con Terminal JS promts",
+  "scripts": {
+    "dev": "tsc & regolith run",
+    "tsc": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Con-JS-Development/Con-Terminal.git"
+  },
+  "author": "ConsoleTerm",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Con-JS-Development/Con-Terminal/issues"
+  },
+  "homepage": "https://github.com/Con-JS-Development/Con-Terminal#readme",
+  "dependencies": {
+    "@minecraft/server": "^1.3.0-beta.1.20.0-preview.22"
+  }
+}
