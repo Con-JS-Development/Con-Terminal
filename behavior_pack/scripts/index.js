@@ -7,6 +7,6 @@ world.beforeEvents.chatSend.subscribe(async (ev) => {
         ev.cancel = true;
         await null;
         const out = await TerminalInput(sender, message.substring(1));
-        sender.sendMessage(sender, out.formatView);
+        sender.sendMessage(out.formatView);
     }
 });
