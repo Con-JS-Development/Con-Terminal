@@ -1,5 +1,6 @@
 import { system } from "@minecraft/server";
 
+const symbolError = Symbol("RunError");
 const AsyncFunctionConstructor = (async function () {}).constructor;
 const GeneratorFunctionConstructor = (function* (){}).constructor;
 const AsyncGeneratorFunctionConstructor = (async function *(){}).constructor;
@@ -31,7 +32,7 @@ enum OutputType{
     Error,
     Successfull
 }
-enum LogTypes{
+export enum LogTypes{
     log,
     error,
     warn
@@ -48,16 +49,12 @@ export async function TerminalInput<s>(source: s, message: string, o:(this: s, t
     const a = await RunCode(message, true, {console:{log:o.bind(source,LogTypes.log),warn:o.bind(source,LogTypes.warn),error:o.bind(source,LogTypes.error)},print:o.bind(source,LogTypes.log), self:source, setTimeout, setInterval, clearInterval:clearRun, clearTimeout:clearRun});
     const multicommand = a.multicommand;
     if(a.syntaxError) return {type: OutputType.SyntaxError, value: a.syntaxError, formatView: formatView(OutputType.SyntaxError, a.syntaxError),multicommand};
-    try {
-        const output = await a.promise;
-        return {type: OutputType.Successfull, value: output, formatView: formatView(OutputType.Successfull, output),multicommand};
-    } catch (error) {
-        console.warn("It was handled xd, but after the promise returns");
-        return {type: OutputType.Error, value: error, formatView: formatView(OutputType.Error, error),multicommand};
-    }
+    const output = await a.promise;
+    if(typeof output === "object" && symbolError in output) return {type: OutputType.Error, value: output[symbolError], formatView: formatView(OutputType.Error, output[symbolError]),multicommand};
+    return {type: OutputType.Successfull, value: output, formatView: formatView(OutputType.Successfull, output),multicommand};
 }
 async function RunCode(code: string, useModules = true, ...scopes: any[]): Promise<{syntaxError?:any, promise?: Promise<any | never>, multicommand: boolean}> {
-    let func, output = {syntaxError: undefined, promise: undefined, multicommand: false};
+    let func, output: any = {syntaxError: undefined, promise: undefined, multicommand: false};
     const modules = useModules?(await BuildAPIScope(...MinecraftModules)):[];
     try {
         //@ts-ignore
@@ -67,7 +64,7 @@ async function RunCode(code: string, useModules = true, ...scopes: any[]): Promi
         return output;
     }
     output.multicommand = func.multicommand??false;
-    output.promise = func();
+    output.promise = Promise.resolve(func()).catch(er=>({[symbolError]: er}));
     return output;
 }
 async function BuildAPIScope(...modules: {module_name:string, tag:string}[]){
