@@ -8,7 +8,7 @@ world.beforeEvents.chatSend.subscribe(async (ev) => {
     if (reg !== null && sender.isOp() && sender.getDynamicProperty(propertyName)) {
         ev.cancel = true;
         const code = message.substring(reg[0].length);
-        const task = TerminalInput(sender, code).catch(er=>console.error(er,er.stack));
+        const task = TerminalInput(sender, code,[{system,world,beforeEvents:world.beforeEvents,afterEvents:world.afterEvents,systemEvents:system.events}]).catch(er=>console.error(er,er.stack));
         sender.sendMessage("  §l§h> §r§7" + code);
         const out = await task;
         switch (out.type) {
@@ -20,7 +20,7 @@ world.beforeEvents.chatSend.subscribe(async (ev) => {
                 return sender.sendMessage("  §l§4> §6" + out.value.message);
             case OutputType.Error:
             case 1:
-                return sender.sendMessage("  §l§6< §7" + out.value);
+                return sender.sendMessage("  §l§6< §7" + out.value);                                                                     
             default:
                 break;
         }

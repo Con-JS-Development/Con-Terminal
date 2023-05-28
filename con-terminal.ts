@@ -45,8 +45,8 @@ function consoleLike(this: any, type: LogTypes,...texts: any[]): void{
 function formatView(type: OutputType, object: any): string{
     return getView[typeof object](ViewStyle.Full, object);
 }
-export async function TerminalInput<s>(source: s, message: string, o:(this: s, type: LogTypes,...params: any[])=>void = consoleLike){
-    const a = await RunCode(message, true, {console:{log:o.bind(source,LogTypes.log),Map,Set,warn:o.bind(source,LogTypes.warn),error:o.bind(source,LogTypes.error)},print:o.bind(source,LogTypes.log), self:source, setTimeout, setInterval, clearInterval:clearRun, clearTimeout:clearRun});
+export async function TerminalInput<s>(source: s, message: string, scope = [], o:(this: s, type: LogTypes,...params: any[])=>void = consoleLike){
+    const a = await RunCode(message, true, {console:{log:o.bind(source,LogTypes.log),Map,Set,warn:o.bind(source,LogTypes.warn),error:o.bind(source,LogTypes.error)},print:o.bind(source,LogTypes.log), self:source, setTimeout, setInterval, clearInterval:clearRun, clearTimeout:clearRun},...scope);
     const {multicommand, startTime} = a;
     if(a.syntaxError) return {type: OutputType.SyntaxError, value: a.syntaxError, formatView: formatView(OutputType.SyntaxError, a.syntaxError),multicommand, startTime};
     const output = await a.promise;

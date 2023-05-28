@@ -8,7 +8,7 @@ export declare enum LogTypes {
     error = 1,
     warn = 2
 }
-export declare function TerminalInput<s>(source: s, message: string, o?: (this: s, type: LogTypes, ...params: any[]) => void): Promise<{
+export declare function TerminalInput<s>(source: s, message: string, scope?: never[], o?: (this: s, type: LogTypes, ...params: any[]) => void): Promise<{
     type: OutputType;
     value: any;
     formatView: string;

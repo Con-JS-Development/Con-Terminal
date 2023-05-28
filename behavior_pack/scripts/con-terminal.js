@@ -46,8 +46,8 @@ function consoleLike(type, ...texts) {
 function formatView(type, object) {
     return getView[typeof object](ViewStyle.Full, object);
 }
-export async function TerminalInput(source, message, o = consoleLike) {
-    const a = await RunCode(message, true, { console: { log: o.bind(source, LogTypes.log), Map, Set, warn: o.bind(source, LogTypes.warn), error: o.bind(source, LogTypes.error) }, print: o.bind(source, LogTypes.log), self: source, setTimeout, setInterval, clearInterval: clearRun, clearTimeout: clearRun });
+export async function TerminalInput(source, message, scope = [], o = consoleLike) {
+    const a = await RunCode(message, true, { console: { log: o.bind(source, LogTypes.log), Map, Set, warn: o.bind(source, LogTypes.warn), error: o.bind(source, LogTypes.error) }, print: o.bind(source, LogTypes.log), self: source, setTimeout, setInterval, clearInterval: clearRun, clearTimeout: clearRun }, ...scope);
     const { multicommand, startTime } = a;
     if (a.syntaxError)
         return { type: OutputType.SyntaxError, value: a.syntaxError, formatView: formatView(OutputType.SyntaxError, a.syntaxError), multicommand, startTime };
