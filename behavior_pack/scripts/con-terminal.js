@@ -26,7 +26,7 @@ const MinecraftModules = [
     { module_name: "@minecraft/server-editor", tag: "editor" },
     { module_name: "@minecraft/server-editor-bindings", tag: "bindings" }
 ];
-var OutputType;
+export var OutputType;
 (function (OutputType) {
     OutputType[OutputType["SyntaxError"] = 0] = "SyntaxError";
     OutputType[OutputType["Error"] = 1] = "Error";
@@ -47,14 +47,14 @@ function formatView(type, object) {
     return getView[typeof object](ViewStyle.Full, object);
 }
 export async function TerminalInput(source, message, o = consoleLike) {
-    const a = await RunCode(message, true, { console: { log: o.bind(source, LogTypes.log), warn: o.bind(source, LogTypes.warn), error: o.bind(source, LogTypes.error) }, print: o.bind(source, LogTypes.log), self: source, setTimeout, setInterval, clearInterval: clearRun, clearTimeout: clearRun });
-    const multicommand = a.multicommand;
+    const a = await RunCode(message, true, { console: { log: o.bind(source, LogTypes.log), Map, Set, warn: o.bind(source, LogTypes.warn), error: o.bind(source, LogTypes.error) }, print: o.bind(source, LogTypes.log), self: source, setTimeout, setInterval, clearInterval: clearRun, clearTimeout: clearRun });
+    const { multicommand, startTime } = a;
     if (a.syntaxError)
-        return { type: OutputType.SyntaxError, value: a.syntaxError, formatView: formatView(OutputType.SyntaxError, a.syntaxError), multicommand };
+        return { type: OutputType.SyntaxError, value: a.syntaxError, formatView: formatView(OutputType.SyntaxError, a.syntaxError), multicommand, startTime };
     const output = await a.promise;
-    if (typeof output === "object" && symbolError in output)
-        return { type: OutputType.Error, value: output[symbolError], formatView: formatView(OutputType.Error, output[symbolError]), multicommand };
-    return { type: OutputType.Successfull, value: output, formatView: formatView(OutputType.Successfull, output), multicommand };
+    if (typeof output === "object" && output !== null && symbolError in output)
+        return { type: OutputType.Error, value: output[symbolError], formatView: formatView(OutputType.Error, output[symbolError]), multicommand, startTime };
+    return { type: OutputType.Successfull, value: output, formatView: formatView(OutputType.Successfull, output), multicommand, startTime };
 }
 async function RunCode(code, useModules = true, ...scopes) {
     let func, output = { syntaxError: undefined, promise: undefined, multicommand: false };
@@ -68,12 +68,13 @@ async function RunCode(code, useModules = true, ...scopes) {
         return output;
     }
     output.multicommand = func.multicommand ?? false;
+    output.startTime = Date.now();
     output.promise = Promise.resolve(func()).catch(er => ({ [symbolError]: er }));
     return output;
 }
 async function BuildAPIScope(...modules) {
     let promises = [];
-    modules.forEach(m => promises.push(import(m.module_name).catch(() => ({}))));
+    modules.forEach(m => promises.push(import(m.module_name).catch(() => null)));
     const dlls = await Promise.all(promises);
     return dlls.map((m, i) => ({ [modules[i].tag]: m }));
 }
@@ -112,7 +113,22 @@ const getView = {
         else if (style === ViewStyle.Short) {
             const names = Object.getOwnPropertyNames(any), symbols = Object.getOwnPropertySymbols(any);
             //@ts-ignore
-            const keys = names.map(k => `§7${k}§r§7: ${getView[typeof any[k]](ViewStyle.Primitive, any[k])}§r`).concat(symbols.map(s => `§r${getView["symbol"](ViewStyle.Primitive, s)}§r§7: ${getView[typeof any[s]](ViewStyle.Primitive, any[s])}`));
+            const keys = names.map(k => {
+                try {
+                    return `§7${k}§r§7: ${getView[typeof any[k]](ViewStyle.Primitive, any[k])}§r`;
+                }
+                catch (error) {
+                    return `§7${k}§r§7: §o(...)§r`;
+                }
+            }).concat(symbols.map(s => {
+                try {
+                    return `§r${getView["symbol"](ViewStyle.Primitive, s)}§r§7: ${getView[typeof any[s]](ViewStyle.Primitive, any[s])}`;
+                }
+                catch (error) {
+                    return `§r${getView["symbol"](ViewStyle.Primitive, s)}§r§7: §o(...)§r`;
+                }
+            }));
+            Object.getOwnPropertyDescriptor;
             const realKeys = keys.slice(0, 5), typeOf = getTypeOfObject(any);
             return `§7${(typeOf == "Object" || typeOf == '') ? "" : typeOf + " "}{${realKeys.join("§7, ")}${keys.length > 5 ? "§r§7, ..." : "§r§7"}}`;
         }
@@ -162,11 +178,17 @@ function buildCompoudView(array, base, object, offSet = "  ", func = false, deep
         }
         else {
             if (get != undefined) {
-                const v = get.call(base);
-                array.push(`${off}§r§7get§r ${typeof key == "string" ? key : getView["symbol"](ViewStyle.Primitive, key)}§7: §r${getView[typeof v](ViewStyle.Short, v)}§r`);
+                let v;
+                try {
+                    v = get.call(base);
+                    array.push(`${off}§r§7get§r ${typeof key == "string" ? key : getView["symbol"](ViewStyle.Primitive, key)}§7: §r${getView[typeof v](ViewStyle.Short, v)}§r`);
+                }
+                catch (error) {
+                    array.push(`${off}§r§7get§r ${typeof key == "string" ? key : getView["symbol"](ViewStyle.Primitive, key)}§7: §o(...)§r`);
+                }
             }
             if (set != undefined)
-                array.push(`${off}§r§7set§r ${typeof key == "string" ? key : getView["symbol"](ViewStyle.Primitive, key)}§7: (...)§r`);
+                array.push(`${off}§r§7set§r ${typeof key == "string" ? key : getView["symbol"](ViewStyle.Primitive, key)}§7: §o(...)§r`);
         }
     }
     if (func)

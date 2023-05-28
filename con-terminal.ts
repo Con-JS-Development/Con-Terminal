@@ -27,7 +27,7 @@ const MinecraftModules = [
     {module_name: "@minecraft/server-editor", tag: "editor"},
     {module_name: "@minecraft/server-editor-bindings", tag: "bindings"}
 ];
-enum OutputType{
+export enum OutputType{
     SyntaxError,
     Error,
     Successfull
@@ -46,14 +46,14 @@ function formatView(type: OutputType, object: any): string{
     return getView[typeof object](ViewStyle.Full, object);
 }
 export async function TerminalInput<s>(source: s, message: string, o:(this: s, type: LogTypes,...params: any[])=>void = consoleLike){
-    const a = await RunCode(message, true, {console:{log:o.bind(source,LogTypes.log),warn:o.bind(source,LogTypes.warn),error:o.bind(source,LogTypes.error)},print:o.bind(source,LogTypes.log), self:source, setTimeout, setInterval, clearInterval:clearRun, clearTimeout:clearRun});
-    const multicommand = a.multicommand;
-    if(a.syntaxError) return {type: OutputType.SyntaxError, value: a.syntaxError, formatView: formatView(OutputType.SyntaxError, a.syntaxError),multicommand};
+    const a = await RunCode(message, true, {console:{log:o.bind(source,LogTypes.log),Map,Set,warn:o.bind(source,LogTypes.warn),error:o.bind(source,LogTypes.error)},print:o.bind(source,LogTypes.log), self:source, setTimeout, setInterval, clearInterval:clearRun, clearTimeout:clearRun});
+    const {multicommand, startTime} = a;
+    if(a.syntaxError) return {type: OutputType.SyntaxError, value: a.syntaxError, formatView: formatView(OutputType.SyntaxError, a.syntaxError),multicommand, startTime};
     const output = await a.promise;
-    if(typeof output === "object" && symbolError in output) return {type: OutputType.Error, value: output[symbolError], formatView: formatView(OutputType.Error, output[symbolError]),multicommand};
-    return {type: OutputType.Successfull, value: output, formatView: formatView(OutputType.Successfull, output),multicommand};
+    if(typeof output === "object" && output !== null && symbolError in output) return {type: OutputType.Error, value: output[symbolError], formatView: formatView(OutputType.Error, output[symbolError]),multicommand, startTime};
+    return {type: OutputType.Successfull, value: output, formatView: formatView(OutputType.Successfull, output),multicommand, startTime};
 }
-async function RunCode(code: string, useModules = true, ...scopes: any[]): Promise<{syntaxError?:any, promise?: Promise<any | never>, multicommand: boolean}> {
+async function RunCode(code: string, useModules = true, ...scopes: any[]): Promise<{syntaxError?:any, promise?: Promise<any | never>, multicommand: boolean, startTime: number}> {
     let func, output: any = {syntaxError: undefined, promise: undefined, multicommand: false};
     const modules = useModules?(await BuildAPIScope(...MinecraftModules)):[];
     try {
@@ -64,12 +64,13 @@ async function RunCode(code: string, useModules = true, ...scopes: any[]): Promi
         return output;
     }
     output.multicommand = func.multicommand??false;
+    output.startTime = Date.now();
     output.promise = Promise.resolve(func()).catch(er=>({[symbolError]: er}));
     return output;
 }
 async function BuildAPIScope(...modules: {module_name:string, tag:string}[]){
     let promises: Promise<any>[] = [];
-    modules.forEach(m=>promises.push(import(m.module_name).catch(()=>({}))));
+    modules.forEach(m=>promises.push(import(m.module_name).catch(()=>null)));
     const dlls = await Promise.all(promises);
     return dlls.map((m,i)=>({[modules[i].tag]: m}));
 }
@@ -105,7 +106,20 @@ const getView: {[key: string]:(style: ViewStyle, n: any)=>string} = {
         else if (style === ViewStyle.Short){
             const names = Object.getOwnPropertyNames(any), symbols = Object.getOwnPropertySymbols(any);
             //@ts-ignore
-            const keys = names.map(k=>`§7${k}§r§7: ${getView[typeof any[k]](ViewStyle.Primitive, any[k])}§r`).concat(symbols.map(s=>`§r${getView["symbol"](ViewStyle.Primitive,s)}§r§7: ${getView[typeof any[s]](ViewStyle.Primitive,any[s])}`));
+            const keys = names.map(k=>{
+                try {
+                    return `§7${k}§r§7: ${getView[typeof any[k]](ViewStyle.Primitive, any[k])}§r`;
+                } catch (error) {
+                    return `§7${k}§r§7: §o(...)§r`;
+                }
+            }).concat(symbols.map(s=>{
+                try {
+                    return `§r${getView["symbol"](ViewStyle.Primitive,s)}§r§7: ${getView[typeof any[s]](ViewStyle.Primitive,any[s])}`;
+                } catch (error) {
+                    return `§r${getView["symbol"](ViewStyle.Primitive,s)}§r§7: §o(...)§r`;
+                }
+            }));
+            Object.getOwnPropertyDescriptor
             const realKeys = keys.slice(0,5), typeOf = getTypeOfObject(any);
             return `§7${(typeOf == "Object" || typeOf == '')?"":typeOf + " "}{${realKeys.join("§7, ")}${keys.length>5?"§r§7, ...":"§r§7"}}`;
         }
@@ -149,10 +163,15 @@ function buildCompoudView(array: string[], base: any, object: any, offSet = "  "
             array.push(`${off}§r${typeof key == "string"?key:getView["symbol"](ViewStyle.Primitive, key)}§7: §r${getView[typeof value](ViewStyle.Short,value)}§r`);
         }else{
             if(get != undefined){
-                const v = get.call(base);
-                array.push(`${off}§r§7get§r ${typeof key == "string"?key:getView["symbol"](ViewStyle.Primitive, key)}§7: §r${getView[typeof v](ViewStyle.Short,v)}§r`);
+                let v;
+                try {
+                    v = get.call(base);
+                    array.push(`${off}§r§7get§r ${typeof key == "string"?key:getView["symbol"](ViewStyle.Primitive, key)}§7: §r${getView[typeof v](ViewStyle.Short,v)}§r`);
+                } catch (error) {
+                    array.push(`${off}§r§7get§r ${typeof key == "string"?key:getView["symbol"](ViewStyle.Primitive, key)}§7: §o(...)§r`);
+                }
             }
-            if(set != undefined) array.push(`${off}§r§7set§r ${typeof key == "string"?key:getView["symbol"](ViewStyle.Primitive, key)}§7: (...)§r`);
+            if(set != undefined) array.push(`${off}§r§7set§r ${typeof key == "string"?key:getView["symbol"](ViewStyle.Primitive, key)}§7: §o(...)§r`);
         }
     }
     if(func) array.push(`${off}§7[[Native Function]]: §7${getView["boolean"](ViewStyle.Primitive, object.toString().endsWith(nativeFunction))}§r`);
