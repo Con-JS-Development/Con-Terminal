@@ -9,5 +9,7 @@
     "baseUrl": ".",
     "skipLibCheck": true,
     "outDir": "./behavior_pack/scripts",
+    "declaration": true,
+    "declarationDir": "./behavior_pack/scripts"
   }
 }

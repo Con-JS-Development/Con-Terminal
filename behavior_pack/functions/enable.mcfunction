@@ -1,0 +1,1 @@
+scriptevent con:terminal_enable
