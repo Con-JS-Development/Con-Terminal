@@ -1,0 +1,12 @@
+{ 
+    "format_version": "1.19.80", 
+    "con:generator": {
+        "isotropic": false ,
+        "sound": "stone",
+        "textures": {
+            "down": "reinforced_deepslate_bottom",
+            "side": "reinforced_deepslate_side",
+            "up": "reinforced_deepslate_top"
+        }
+    }
+}

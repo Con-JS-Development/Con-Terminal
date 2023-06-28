@@ -4,7 +4,7 @@
 		"name": "Con JS Terminal",
 		"description": "Terminal with JS prompts by ConMaster2112",
 		"uuid": "4997eb94-8968-4158-864b-74f1999192f7",
-		"version": "1.0.0-beta",
+		"version": "1.2.0-beta",
 		"min_engine_version": [1, 20, 10]
 	},
 	"modules": [
@@ -17,8 +17,9 @@
 	],
 	"dependencies": [
 		{"module_name": "@minecraft/server","version": "1.4.0-beta"},
-        {"module_name": "@minecraft/server-ui","version": "1.1.0-beta"},
-        {"module_name": "@minecraft/server-gametest","version": "1.0.0-beta"}
+        {"module_name": "@minecraft/server-ui","version": "1.2.0-beta"},
+        {"module_name": "@minecraft/server-gametest","version": "1.0.0-beta"},
+		{"uuid":"5ab0c7b0-5ab5-470e-8deb-e52637d035bb", "version":"1.2.0-beta"}
 	],
 	"capabilities": ["script_eval"]
 }

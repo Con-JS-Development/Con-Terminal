@@ -1,0 +1,18 @@
+{ 
+  "format_version": "1.19.80", 
+  "minecraft:block": {
+    "description": {
+      "identifier": "con:generator",
+      "register_to_creative_menu": true,
+      "menu_category": {                
+          "category": "construction",               
+          "is_hidden_in_commands": false
+      }
+    }, 
+    "components": {
+        "minecraft:destructible_by_mining": {
+            "seconds_to_destroy": 255
+        }
+    } 
+  } 
+}
