@@ -1,4 +1,4 @@
-import { DynamicPropertiesDefinition, EntityTypes, MinecraftEntityTypes, Player, ScriptEventSource, system, world } from "@minecraft/server";
+import { Player, system, world } from "@minecraft/server";
 import { OutputType, TerminalInput } from "./con-terminal";
 
 const propertyName = "allow_terminal";
@@ -10,39 +10,9 @@ const currentScope = {
     systemAfterEvents: system.afterEvents,
     delay(ticks) { return new Promise(res => system.runTimeout(res, ticks)) }
 }
-class Settings {
-    constructor() {
-        world.afterEvents.worldInitialize.subscribe(ev => {
-            ev.propertyRegistry.registerEntityTypeDynamicProperties(new DynamicPropertiesDefinition().defineBoolean(propertyName, false), EntityTypes.get("minecraft:player"));
-            ev.propertyRegistry.registerWorldDynamicProperties(new DynamicPropertiesDefinition()
-                .defineBoolean("allow_blocks", true)
-                .defineBoolean("allow_entities", true)
-                .defineBoolean("allow_terminal", true)
-                .defineBoolean("allow_terminal_all_players", false)
-                .defineBoolean("terminal_require_op", true)
-            )
-        });
-    }
-    /**@type {boolean} */
-    get allow_blocks() { return world.getDynamicProperty("allow_blocks") }
-    set allow_blocks(v) { return world.setDynamicProperty("allow_blocks", v) }
-    /**@type {boolean} */
-    get allow_entities() { return world.getDynamicProperty("allow_entities") }
-    set allow_entities(v) { return world.setDynamicProperty("allow_entities", v) }
-    /**@type {boolean} */
-    get allow_terminal() { return world.getDynamicProperty("allow_terminal") }
-    set allow_terminal(v) { return world.setDynamicProperty("allow_terminal", v) }
-    /**@type {boolean} */
-    get allow_terminal_all_players() { return world.getDynamicProperty("allow_terminal_all_players") }
-    set allow_terminal_all_players(v) { return world.setDynamicProperty("allow_terminal_all_players", v) }
-    /**@type {boolean} */
-    get terminal_require_op() { return world.getDynamicProperty("terminal_require_op") }
-    set terminal_require_op(v) { return world.setDynamicProperty("terminal_require_op", v) }
-}
-const settings = new Settings;
 world.beforeEvents.chatSend.subscribe(async (ev) => {
     const { sender, message } = ev, reg = message.match(/^( +|)>( +|)/g);
-    if (reg !== null && (settings.terminal_require_op ? sender.isOp() : true) && ((sender.getDynamicProperty(propertyName) || settings.allow_terminal_all_players) && settings.allow_terminal)) {
+    if (reg !== null) {
         ev.cancel = true;
         const code = message.substring(reg[0].length);
         const task = TerminalInput(sender, code, [currentScope]).catch(er => console.error(er, er.stack));

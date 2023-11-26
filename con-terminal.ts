@@ -20,14 +20,15 @@ const MinecraftModules = [
     {module_name: "@minecraft/server-net", tag: "net"},
     {module_name: "@minecraft/server-admin", tag: "admin"},
     {module_name: "@minecraft/server-editor", tag: "editor"},
+    {module_name: "@minecraft/common", tag: "common"},
     {module_name: "@minecraft/server-editor-bindings", tag: "bindings"}
 ];
-enum OutputType{
+export enum OutputType{
     SyntaxError,
     Error,
     Successfull
 }
-enum LogTypes{
+export enum LogTypes{
     log,
     error,
     warn,
@@ -90,7 +91,7 @@ function BuildNewFunction(thisArg: any = globalThis, code: string, ...scopes: {}
     a.multicommand = !!func.multicommand;
     return a;
 }
-enum ViewStyle{
+export enum ViewStyle{
     Primitive,
     Short,
     Full,
@@ -222,4 +223,4 @@ globalThis[Symbol.toStringTag] = 'GlobalThis';
 globalThis.console[Symbol.toStringTag] = "Console";
 timeoutsInit();
 
-export {OutputType, formatView as FormatView, TerminalInput, timeoutsSupported};
+export { formatView as FormatView, TerminalInput, timeoutsSupported};

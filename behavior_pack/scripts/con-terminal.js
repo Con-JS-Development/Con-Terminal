@@ -20,15 +20,16 @@ const MinecraftModules = [
     { module_name: "@minecraft/server-net", tag: "net" },
     { module_name: "@minecraft/server-admin", tag: "admin" },
     { module_name: "@minecraft/server-editor", tag: "editor" },
+    { module_name: "@minecraft/common", tag: "common" },
     { module_name: "@minecraft/server-editor-bindings", tag: "bindings" }
 ];
-var OutputType;
+export var OutputType;
 (function (OutputType) {
     OutputType[OutputType["SyntaxError"] = 0] = "SyntaxError";
     OutputType[OutputType["Error"] = 1] = "Error";
     OutputType[OutputType["Successfull"] = 2] = "Successfull";
 })(OutputType || (OutputType = {}));
-var LogTypes;
+export var LogTypes;
 (function (LogTypes) {
     LogTypes[LogTypes["log"] = 0] = "log";
     LogTypes[LogTypes["error"] = 1] = "error";
@@ -98,7 +99,7 @@ function BuildNewFunction(thisArg = globalThis, code, ...scopes) {
     a.multicommand = !!func.multicommand;
     return a;
 }
-var ViewStyle;
+export var ViewStyle;
 (function (ViewStyle) {
     ViewStyle[ViewStyle["Primitive"] = 0] = "Primitive";
     ViewStyle[ViewStyle["Short"] = 1] = "Short";
@@ -248,4 +249,4 @@ globalThis[Symbol.toStringTag] = 'GlobalThis';
 //@ts-ignore
 globalThis.console[Symbol.toStringTag] = "Console";
 timeoutsInit();
-export { OutputType, formatView as FormatView, TerminalInput, timeoutsSupported };
+export { formatView as FormatView, TerminalInput, timeoutsSupported };
